@@ -32,7 +32,7 @@ jobs:
           flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
       - name: Build release APK
-        run: cd app && flutter build apk --release
+        run: cd app && flutter build apk --release --no-shrink
 
       - uses: actions/upload-artifact@v4
         with:
