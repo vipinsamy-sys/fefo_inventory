@@ -1,0 +1,40 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Scaffold Flutter project and add sources
+        run: |
+          flutter create --org com.twincord --project-name fefo_inventory --platforms android app
+          rm -rf app/lib && cp -r lib app/lib
+          cd app
+          flutter pub add google_mlkit_text_recognition image_picker sqflite path intl
+          # Camera permission
+          sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA"/>\n    <application#' android/app/src/main/AndroidManifest.xml
+          # App name shown on phone
+          sed -i 's#android:label="fefo_inventory"#android:label="FEFO Inventory"#' android/app/src/main/AndroidManifest.xml
+          flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      - name: Build release APK
+        run: cd app && flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fefo-inventory-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
